@@ -1,4 +1,4 @@
-# GHShift(ケアシフト)
+# GHShift
 
 ---
 
