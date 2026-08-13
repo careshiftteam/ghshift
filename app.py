@@ -1,5 +1,5 @@
 """
-CareShift v4 - 全事業所対応・事業所登録・総合メニュー
+GHShift v4 - 全事業所対応・事業所登録・総合メニュー
 """
 import sqlite3, json, calendar, csv, re, io, os
 from datetime import date, datetime, timedelta
@@ -5746,7 +5746,7 @@ def api_validate_shift(vid):
 if __name__=="__main__":
     init_db()
     print("\n"+"="*55)
-    print("  CareShift v4")
+    print("  GHShift v4")
     print("  http://127.0.0.1:5000          総合メニュー")
     print("  http://127.0.0.1:5000/facility 事業所登録")
     print("  http://127.0.0.1:5000/staff    職員登録")
