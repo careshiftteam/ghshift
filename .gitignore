@@ -1,0 +1,13 @@
+# データベース(利用者ごとに自動生成されるため、共有・公開しない)
+*.db
+
+# Pythonの一時ファイル
+__pycache__/
+*.pyc
+
+# 環境変数・認証情報
+.env
+env.txt
+id.txt
+ssh.txt
+*password*.txt
