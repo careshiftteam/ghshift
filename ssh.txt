@@ -1,0 +1,13 @@
+ssh ubuntu@49.212.171.173
+
+ubuntu
+Br=JOkiwa6RE
+
+
+ps aux | grep app.py
+sudo kill 137539
+Br=JOkiwa6RE
+bash start.sh
+
+cd /var/www/careshift
+CARESHIFT_HOST=0.0.0.0 nohup python3 app.py > app.log 2>&1 &
