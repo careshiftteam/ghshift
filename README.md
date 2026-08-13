@@ -122,7 +122,7 @@ GHShiftは自由に改変して構いません(このアプリ自体を販売す
 
 GHShiftの利用にあたっては、以下の利用規約に同意いただいたものとみなします。
 
-→ [GHShift利用規約](https://ここにHPのURL/terms.html)
+→ [GHShift利用規約](https://ghshift.com/terms.html)
 
 主なポイントだけ簡単にまとめると:
 
@@ -137,4 +137,6 @@ GHShiftの利用にあたっては、以下の利用規約に同意いただい�
 
 - 運営者:TOMO(個人)
 - お問い合わせ:careshiftteam@gmail.com
-- ホームページ:[GHShift](https://ここにHPのURL/index.html)
+- ホームページ:[GHShift](https://ghshift.com/index.html)
+
+介護業界のDX化を少しでも後押しできればと思い、無償で公開しています。使ってみて気づいたことがあれば、ぜひ掲示板から教えてください。
