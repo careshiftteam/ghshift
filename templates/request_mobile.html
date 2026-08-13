@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>GHShift｜希望日入力</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#f1f5f9;font-family:'Noto Sans JP','Yu Gothic UI',sans-serif;color:#111827}
+body{display:flex;flex-direction:column}
+
+/* ── ヘッダー ── */
+.app-header{
+  position:sticky;top:0;z-index:100;flex-shrink:0;
+  background:#2563eb;color:#fff;
+  padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 8px rgba(15,23,42,.2);
+}
+.app-header h1{font-size:16px;font-weight:700}
+.app-header .user-name{font-size:12px;opacity:.85}
+.header-actions{display:flex;gap:6px}
+.header-btn{
+  background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+  color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;
+  font-family:inherit;text-decoration:none;
+}
+
+/* ── 縦画面／横画面の切り替え ── */
+.layout-wrap{display:flex;flex-direction:column;flex:1;min-height:0}
+
+/* 横画面（スマホを横向きにした時）：左カレンダー／右一覧の2カラムに切り替え */
+@media (orientation:landscape) and (max-height:520px){
+  .layout-wrap{flex-direction:row;overflow:hidden}
+  .cal-col{
+    flex:0 0 40%;overflow-y:auto;
+    border-right:1px solid #e2e8f0;
+  }
+  .list-section{flex:0 0 60%;overflow-y:auto}
+}
+
+/* ── カレンダー部分 ── */
+.cal-section{
+  background:#fff;
+  padding:12px 16px 8px;
+  border-bottom:1px solid #e2e8f0;
+}
+.cal-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.cal-nav button{
+  width:32px;height:32px;border:1px solid #e2e8f0;border-radius:8px;
+  background:#f8fafc;color:#475569;font-size:18px;cursor:pointer;
+}
+.cal-nav .cal-title{font-size:15px;font-weight:700;color:#172033}
+.cal-summary{display:flex;gap:14px;justify-content:center;margin-bottom:10px;font-size:12px;color:#475569}
+.cal-summary .sm-rest{color:#94a3b8;font-weight:700}
+.cal-summary .sm-hol{color:#d97706;font-weight:700}
+.cal-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:2px;
+}
+.cal-dow{
+  text-align:center;font-size:10px;font-weight:700;
+  color:#64748b;padding:2px 0 4px;
+}
+.cal-dow.sun{color:#ef4444}
+.cal-dow.sat{color:#3b82f6}
+.cal-day{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;
+  padding:4px 2px 6px;border-radius:8px;cursor:pointer;
+  min-height:44px;
+}
+.cal-day:active{background:#f1f5f9}
+.cal-day.other-month{visibility:hidden;pointer-events:none}
+.cal-day.today .day-num{
+  background:#2563eb;color:#fff;border-radius:50%;
+  width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+}
+.day-num{font-size:13px;font-weight:500;color:#172033;line-height:26px}
+.cal-day.sun .day-num{color:#ef4444}
+.cal-day.sat .day-num{color:#3b82f6}
+.cal-day.today .day-num{color:#fff !important}
+.day-mark{margin-top:2px;font-size:10px;font-weight:700;min-height:14px}
+.day-mark.mk-rest{color:#94a3b8}
+.day-mark.mk-hol{color:#d97706}
+.cal-day.has-req.mk-rest-bg{background:#f1f5f9}
+.cal-day.has-req.mk-hol-bg{background:#fffbeb}
+
+/* ── ヒント ── */
+.hint{
+  padding:12px 16px;font-size:12px;color:#64748b;background:#fff;
+  border-bottom:1px solid #e2e8f0;
+}
+
+/* ── 選択済み一覧 ── */
+.list-section{padding:12px 16px 24px}
+.list-title{font-size:13px;font-weight:700;color:#172033;margin-bottom:8px}
+.req-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border:1px solid #e2e8f0;border-radius:8px;
+  padding:10px 12px;margin-bottom:6px;font-size:13px;
+}
+.req-item .rd-date{font-weight:700}
+.req-item .rd-type{font-size:11px;padding:2px 8px;border-radius:5px;font-weight:700}
+.rd-type.rest{background:#f1f5f9;color:#64748b}
+.rd-type.hol{background:#fffbeb;color:#d97706}
+.req-item .rd-del{
+  background:none;border:none;color:#ef4444;font-size:12px;cursor:pointer;padding:4px 6px;
+}
+.no-req{text-align:center;color:#94a3b8;font-size:12px;padding:20px 0}
+
+/* ── モーダル（選択パネル） ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:200;
+  align-items:flex-end;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal-sheet{
+  width:100%;max-width:480px;background:#fff;border-radius:16px 16px 0 0;
+  padding:16px 16px 24px;
+}
+.modal-title{font-size:14px;font-weight:700;margin-bottom:12px;color:#172033}
+.modal-btn{
+  width:100%;text-align:left;padding:14px 16px;border:1px solid #e2e8f0;border-radius:10px;
+  background:#fff;font-size:14px;font-weight:600;margin-bottom:8px;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;gap:10px;
+}
+.modal-btn .dot-ic{width:10px;height:10px;border-radius:50%}
+.modal-btn.rest .dot-ic{background:#94a3b8}
+.modal-btn.hol .dot-ic{background:#d97706}
+.modal-btn.clear{color:#ef4444;border-color:#fecaca}
+.modal-cancel{
+  width:100%;text-align:center;padding:12px;border:none;background:#f1f5f9;border-radius:10px;
+  font-size:13px;color:#475569;margin-top:6px;cursor:pointer;font-family:inherit;
+}
+
+.loading{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <h1>GHShift <span style="font-size:11px;font-weight:600;opacity:.9">｜希望日入力</span></h1>
+    <div class="user-name" id="user-name">読み込み中...</div>
+  </div>
+  <div class="header-actions">
+    <a class="header-btn" href="/my_shift">📅 シフト表へ</a>
+    <button class="header-btn" onclick="doLogout()">ログアウト</button>
+  </div>
+</div>
+
+<div class="layout-wrap">
+<div class="cal-col">
+<div class="cal-section">
+  <div class="cal-nav">
+    <button onclick="prevMonth()">‹</button>
+    <div class="cal-title" id="cal-title"></div>
+    <button onclick="nextMonth()">›</button>
+  </div>
+  <div class="cal-summary">
+    <span>希望休 <span class="sm-rest" id="sm-rest">0</span>日</span>
+    <span>有給 <span class="sm-hol" id="sm-hol">0</span>日</span>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+<div class="hint">日付をタップして「希望休」「有給」を登録できます。自分の希望のみ入力できます。</div>
+</div>
+
+<div class="list-section">
+  <div class="list-title">今月の登録一覧</div>
+  <div id="req-list"><div class="loading">読み込み中...</div></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet">
+    <div class="modal-title" id="modal-title">日付</div>
+    <button class="modal-btn rest" onclick="setReq('rest')"><span class="dot-ic"></span>希望休にする</button>
+    <button class="modal-btn hol" onclick="setReq('hol')"><span class="dot-ic"></span>有給にする</button>
+    <button class="modal-btn clear" onclick="setReq(null)">登録を取り消す</button>
+    <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+  </div>
+</div>
+
+<script>
+const today = new Date();
+let curYear = today.getFullYear();
+let curMonth = today.getMonth() + 1;
+let ME = null;
+let REQS = {}; // day -> {req_type, priority, note}
+let modalDay = null;
+const WD = ['日','月','火','水','木','金','土'];
+const TYPE_LABEL = {rest:'希望休', hol:'有給'};
+
+async function init(){
+  try{
+    const me = await fetch('/api/auth/me').then(r=>r.json());
+    if(!me.ok){ location.href='/login'; return; }
+    ME = me.user;
+    document.getElementById('user-name').textContent = ME.name || ME.login_id;
+
+    await loadRequests();
+    renderCalendar();
+    renderList();
+  }catch(e){
+    document.getElementById('req-list').innerHTML = '<div class="loading">読み込みに失敗しました</div>';
+  }
+}
+
+async function loadRequests(){
+  REQS = {};
+  const rows = await fetch(`/api/requests/${curYear}/${curMonth}`).then(r=>r.json()).catch(()=>[]);
+  (Array.isArray(rows)?rows:[]).forEach(r=>{
+    if(r.req_type==='rest' || r.req_type==='hol'){
+      REQS[r.day] = r;
+    }
+  });
+}
+
+function renderCalendar(){
+  document.getElementById('cal-title').textContent = `${curYear}年${curMonth}月`;
+  const grid = document.getElementById('cal-grid');
+  let html = WD.map((w,i)=>
+    `<div class="cal-dow ${i===0?'sun':i===6?'sat':''}">${w}</div>`
+  ).join('');
+
+  const firstDay = new Date(curYear, curMonth-1, 1).getDay();
+  const lastDay = new Date(curYear, curMonth, 0).getDate();
+
+  for(let i=0; i<firstDay; i++){
+    html += `<div class="cal-day other-month"><div class="day-num">-</div></div>`;
+  }
+
+  let restCount=0, holCount=0;
+  for(let d=1; d<=lastDay; d++){
+    const date = new Date(curYear, curMonth-1, d);
+    const dow = date.getDay();
+    const isToday = curYear===today.getFullYear() && curMonth===today.getMonth()+1 && d===today.getDate();
+    const isSun = dow===0, isSat = dow===6;
+    const req = REQS[d];
+    let markHtml = '', bgClass = '';
+    if(req){
+      if(req.req_type==='rest'){ markHtml='休'; bgClass='mk-rest-bg'; restCount++; }
+      else if(req.req_type==='hol'){ markHtml='有'; bgClass='mk-hol-bg'; holCount++; }
+    }
+    html += `<div class="cal-day ${isToday?'today':''} ${isSun?'sun':''} ${isSat?'sat':''} ${req?'has-req '+bgClass:''}"
+      onclick="openModal(${d})">
+      <div class="day-num">${d}</div>
+      <div class="day-mark ${req?'mk-'+req.req_type:''}">${markHtml}</div>
+    </div>`;
+  }
+
+  const total = firstDay + lastDay;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for(let i=0; i<remaining; i++){
+    html += `<div class="cal-day other-month"><div class="day-num">-</div></div>`;
+  }
+
+  grid.innerHTML = html;
+  document.getElementById('sm-rest').textContent = restCount;
+  document.getElementById('sm-hol').textContent = holCount;
+}
+
+function renderList(){
+  const wrap = document.getElementById('req-list');
+  const days = Object.keys(REQS).map(Number).sort((a,b)=>a-b);
+  if(!days.length){
+    wrap.innerHTML = '<div class="no-req">登録はまだありません</div>';
+    return;
+  }
+  wrap.innerHTML = days.map(d=>{
+    const req = REQS[d];
+    const date = new Date(curYear, curMonth-1, d);
+    return `<div class="req-item">
+      <span class="rd-date">${curMonth}月${d}日（${WD[date.getDay()]}）</span>
+      <span class="rd-type ${req.req_type}">${TYPE_LABEL[req.req_type]}</span>
+      <button class="rd-del" onclick="openModal(${d})">変更</button>
+    </div>`;
+  }).join('');
+}
+
+function openModal(d){
+  modalDay = d;
+  const date = new Date(curYear, curMonth-1, d);
+  document.getElementById('modal-title').textContent = `${curMonth}月${d}日（${WD[date.getDay()]}）`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  modalDay = null;
+}
+
+async function setReq(type){
+  if(!modalDay) return;
+  const d = modalDay;
+  closeModal();
+  try{
+    if(type===null){
+      await fetch(`/api/requests/${ME.id}/${curYear}/${curMonth}/${d}`, {method:'DELETE'});
+    }else{
+      await fetch('/api/requests', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({staff_id: ME.id, year: curYear, month: curMonth, day: d, req_type: type, priority: 'prefer'})
+      });
+    }
+    await loadRequests();
+    renderCalendar();
+    renderList();
+  }catch(e){
+    alert('保存に失敗しました。通信環境をご確認のうえ、もう一度お試しください。');
+  }
+}
+
+async function prevMonth(){
+  curMonth--;
+  if(curMonth < 1){ curMonth=12; curYear--; }
+  await loadRequests();
+  renderCalendar();
+  renderList();
+}
+
+async function nextMonth(){
+  curMonth++;
+  if(curMonth > 12){ curMonth=1; curYear++; }
+  await loadRequests();
+  renderCalendar();
+  renderList();
+}
+
+async function doLogout(){
+  await fetch('/api/auth/logout',{method:'POST'}).catch(()=>{});
+  location.href='/login';
+}
+
+init();
+</script>
+</body>
+</html>

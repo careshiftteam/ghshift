@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GHShift｜ログイン</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f4f7fb;font-family:'Noto Sans JP','Yu Gothic UI','Meiryo',sans-serif;color:#111827;padding:24px}
+.login-card{width:410px;max-width:100%;margin:0;background:#fff;border:1px solid #d7dde6;border-radius:10px;padding:28px 24px 24px;box-shadow:0 1px 4px rgba(15,23,42,.08)}
+.brand-name{text-align:center;font-size:25px;font-weight:700;line-height:1.2;margin:4px 0 4px}
+.err{display:none;background:#fff1f2;color:#b42336;border:1px solid #fecdd3;border-radius:6px;padding:8px 10px;font-size:12px;margin:0 0 10px}
+.form-row{margin-bottom:12px}
+label{display:block;font-size:13px;font-weight:700;line-height:1.3;margin-bottom:5px;color:#111827}
+.input-wrap{position:relative}
+input{width:100%;height:36px;padding:6px 42px 6px 10px;border:1px solid #c7d0dc;border-radius:6px;background:#eaf2ff;color:#111827;font:inherit;font-size:13px}
+.password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:32px;height:28px;border:0;border-radius:5px;background:transparent;color:#475569;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1}
+.password-toggle:hover{background:#dbeafe;color:#1d4ed8}
+.password-toggle:focus-visible{outline:2px solid #2563eb;outline-offset:1px}
+input:focus{outline:2px solid #111827;outline-offset:0;border-color:#111827}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.btn{height:40px;border:1px solid transparent;border-radius:7px;color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.btn-login{background:#2563eb;border-color:#1d4ed8}.btn-login:hover{background:#1d4ed8}
+.btn-permission{background:#ef4438;border-color:#dc362d}.btn-permission:hover{background:#dc362d}
+@media(max-width:460px){body{padding:12px}.login-card{padding:22px 18px}.actions{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<form class="login-card" id="login-form" autocomplete="on" onsubmit="event.preventDefault();doLogin('/')">
+  <div class="brand-name">GHShift</div>
+  <div class="err" id="err-msg"></div>
+  <div class="form-row">
+    <label for="login-id">ユーザー名</label>
+    <input type="text" id="login-id" autocomplete="username">
+  </div>
+  <div class="form-row">
+    <label for="password">パスワード</label>
+    <div class="input-wrap">
+      <input type="password" id="password" autocomplete="current-password" value="">
+      <button class="password-toggle" id="password-toggle" type="button" onclick="togglePassword()" aria-label="パスワードを表示" title="パスワードを表示">👁</button>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-login" type="button" onclick="doLogin('/')">ログイン</button>
+    <button class="btn btn-permission" type="button" onclick="doLogin('/permissions')">権限設定</button>
+  </div>
+</form>
+<script>
+function togglePassword(){
+  const input=document.getElementById('password');
+  const btn=document.getElementById('password-toggle');
+  const showing=input.type==='text';
+  input.type=showing?'password':'text';
+  btn.textContent=showing?'👁':'🙈';
+  btn.setAttribute('aria-label',showing?'パスワードを表示':'パスワードを隠す');
+  btn.title=showing?'パスワードを表示':'パスワードを隠す';
+  input.focus();
+}
+document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin('/');});
+async function doLogin(destination){
+  const id=document.getElementById('login-id').value.trim();
+  const pw=document.getElementById('password').value;
+  const err=document.getElementById('err-msg');
+  if(!id||!pw){err.textContent='ユーザー名とパスワードを入力してください';err.style.display='block';return;}
+  err.style.display='none';
+  try{
+    const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login_id:id,password:pw})});
+    const data=await res.json();
+    if(data.ok){
+      if(destination==='/permissions' && data.user.system_role!=='admin'){
+        err.textContent='権限設定は管理者のみ利用できます';err.style.display='block';return;
+      }
+      // 2026-07-09: staffロールのPC/スマホ振り分けはapp.py側(menu())の
+      // User-Agent判定に一本化。login.html側での決め打ちは廃止し、
+      // 常にdestinationへ遷移させる（staffは"/"→menu()が自動で
+      // /my_shift または /view_shift へ振り分ける）。
+      location.href=destination;
+    }else{err.textContent=data.error||'ログインに失敗しました';err.style.display='block';}
+  }catch(e){err.textContent='サーバーに接続できません';err.style.display='block';}
+}
+</script>
+</body>
+</html>

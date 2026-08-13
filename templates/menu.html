@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GHShift｜メインメニュー</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#eef3f8;--panel:#fff;--line:#d4dde8;--line2:#b7c3d2;--text:#172033;--sub:#405069;--muted:#6b7b91;--blue:#2f6fd6;--red:#dc2626;--font:'Noto Sans JP','Yu Gothic UI','Meiryo',sans-serif;--mono:'DM Mono',monospace}
+html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-family:var(--font);font-size:13px}
+.topbar{height:47px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 10px;gap:10px}
+.brand{display:flex;align-items:center;gap:8px;padding-right:10px;border-right:1px solid var(--line);font-size:20px;font-weight:700;line-height:1}
+.page-title{font-size:20px;font-weight:700;white-space:nowrap;line-height:1}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:6px}
+.btn{height:30px;padding:4px 12px;border:1px solid var(--line2);border-radius:6px;background:#fff;color:var(--sub);font:500 12px/1 var(--font);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;box-shadow:none}
+.btn:hover{filter:brightness(.98)}
+.top-actions .btn:nth-child(1){background:#eaf2ff;border-color:#9dbcf8;color:#1d4ed8}
+.top-actions .btn:nth-child(2){background:#f2ecff;border-color:#c4b5fd;color:#6d28d9}
+.top-actions .btn:nth-child(3){background:#eaf8ef;border-color:#9fd8b8;color:#167445}
+.top-actions .btn:nth-child(4){background:#eaf8f6;border-color:#98d9d2;color:#0f766e}
+.top-actions .btn:nth-child(5){background:#fff4e8;border-color:#efbd7e;color:#a95600}
+.top-actions .btn:nth-child(6){background:#f1f5f9;border-color:#cbd5e1;color:#475569}
+.top-actions .btn:nth-child(7){background:#fff1f3;border-color:#efb2bb;color:#be3344}
+.top-actions .btn.active{background:#2f6fd6!important;border-color:#245fbe!important;color:#fff!important}
+
+.btn-newshift{background:#eaf2ff!important;border-color:#9dbcf8!important;color:#1d4ed8!important}
+.btn-openshift{background:#f2ecff!important;border-color:#c4b5fd!important;color:#6d28d9!important}
+.shift-modal{position:fixed;inset:0;background:rgba(15,23,42,.28);display:none;align-items:center;justify-content:center;z-index:1100;padding:20px}
+.shift-modal.open{display:flex}
+.shift-dialog{width:min(460px,calc(100vw - 32px));background:#fff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;box-shadow:0 18px 50px rgba(15,23,42,.22)}
+.shift-head{height:44px;padding:0 14px;background:#f7f9fc;border-bottom:1px solid #d4dde8;display:flex;align-items:center;font-size:14px;font-weight:700;color:#172033}
+.shift-close{margin-left:auto;width:28px;height:28px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#475569;cursor:pointer}
+.shift-body{padding:14px;display:flex;flex-direction:column;gap:12px}
+.shift-row{display:flex;flex-direction:column;gap:5px}
+.shift-label{font-size:11px;font-weight:700;color:#405069}
+.shift-select{height:32px;border:1px solid #b7c3d2;border-radius:6px;background:#fff;color:#172033;font:500 12px/1 var(--font);padding:0 9px}
+.shift-month{display:flex;align-items:center;gap:8px}
+.shift-month-btn{width:30px;height:30px;border:1px solid #b7c3d2;border-radius:6px;background:#fff;color:#405069;font-size:16px;cursor:pointer}
+.shift-month-label{min-width:120px;height:30px;border:1px solid #cfe0fb;border-radius:999px;background:#edf4ff;color:#1d4ed8;font:700 13px/1 var(--font);display:inline-flex;align-items:center;justify-content:center}
+.shift-note{font-size:11px;color:#6b7b91;line-height:1.6;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:9px}
+.shift-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 14px;border-top:1px solid #d4dde8;background:#f7f9fc}
+.shift-foot .btn.primary{background:#2f6fd6;border-color:#245fbe;color:#fff}
+
+
+.shell{height:calc(100% - 47px);display:grid;grid-template-columns:260px minmax(0,1fr);overflow:hidden}
+.sidebar{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;transition:transform .25s ease}
+/* ハンバーガーボタン（スマホ縦のみ表示） */
+.hamburger-btn{display:none;position:fixed;top:56px;left:8px;z-index:500;width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:18px;cursor:pointer;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+/* オーバーレイ */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:400}
+@media(max-width:600px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;top:47px;left:0;bottom:0;width:260px;z-index:450;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .hamburger-btn{display:flex}
+}
+.sidebar-title{height:44px;padding:0 9px;display:flex;align-items:center;border-bottom:1px solid var(--line);background:#f7f9fc;font-size:14px;font-weight:700}
+.fac-list{flex:1;overflow-y:auto;padding:6px 6px 16px}
+.fac-actions{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-top:1px solid #e8edf3;background:#f7f9fc}
+.fac-month-row{display:flex;align-items:center;gap:6px}
+.fac-month-btn{width:24px;height:24px;border:1px solid #b7c3d2;border-radius:5px;background:#fff;color:#405069;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fac-month-btn:hover{background:#edf4ff;border-color:#2f6fd6;color:#2f6fd6}
+.fac-month-label{font-size:12px;font-weight:700;color:#172033;min-width:80px}
+.fac-btn-row{display:flex;gap:6px;flex-wrap:wrap}
+.fac-btn{height:28px;padding:0 12px;border-radius:6px;font:600 11px/1 var(--font);cursor:pointer;border:1px solid;white-space:nowrap;display:inline-flex;align-items:center}
+.fac-btn-new{background:#2f6fd6;border-color:#245fbe;color:#fff}
+.fac-btn-new:hover{background:#245fbe}
+.fac-btn-open{background:#fff;border-color:#b7c3d2;color:#405069}
+.fac-btn-open:hover{background:#edf4ff;border-color:#2f6fd6;color:#2f6fd6}
+.fac-card{background:#fff;border:1px solid #d5dbe5;border-left:4px solid var(--fac-color,#2f6fd6);border-radius:6px;margin-bottom:4px;overflow:hidden;cursor:pointer;transition:border-color .12s,background .12s,box-shadow .12s}
+.fac-card:hover{border-color:#2f6fd6;background:#f8fbff}.fac-card.selected{border-color:#2f6fd6;background:#edf4ff;box-shadow:0 0 0 1px #2f6fd6 inset}.fac-card.selected .fac-body{position:relative}.fac-card.selected .fac-body::after{content:'選択中';position:absolute;right:7px;bottom:6px;padding:1px 6px;border-radius:999px;background:#2f6fd6;color:#fff;font-size:8px;font-weight:700}
+.fac-line{display:none}.fac-body{padding:7px 8px}.fac-head{display:flex;align-items:center;gap:6px}.fac-code{font:500 13px/1.2 var(--mono)}
+.fac-type{font-size:8px;font-weight:700;padding:1px 4px;border:1px solid currentColor;border-radius:4px}.status{margin-left:auto;padding:2px 5px;border-radius:5px;border:1px solid #cbd5e1;background:#f8fafc;color:#475569;font-size:9px;white-space:nowrap}.status.draft{border-color:#fed7aa;background:#fff7ed;color:#d97706}
+.fac-name{margin-top:4px;color:var(--muted);font-size:10px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid #e8edf4}.meta-group{display:inline-flex;align-items:center;gap:4px;min-width:0}.meta-label{font-size:9px;color:var(--muted);font-weight:500;white-space:nowrap}.meta-value{font-size:10px;color:var(--text);font-weight:500;white-space:nowrap}.meta-value.warn{color:var(--red)}.meta-sep{width:1px;height:13px;background:#dbe3ef;flex:0 0 auto}.unit-badge{display:inline-flex;align-items:center;justify-content:center;min-height:20px;padding:0 7px;border-radius:999px;border:1px solid #e5a44b;background:#fff5e8;color:#9a5a00;font-size:9px;font-weight:600;line-height:1.1;white-space:nowrap}.unit-badge.empty{border-color:#d5deea;background:#f8fafc;color:var(--muted)}
+.warning-click{cursor:pointer;text-decoration:underline;text-underline-offset:2px}.warning-click:hover{color:#b91c1c}.warn-modal{position:fixed;inset:0;background:rgba(15,23,42,.28);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}.warn-modal.open{display:flex}.warn-dialog{width:min(560px,calc(100vw - 32px));max-height:72vh;background:#fff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;box-shadow:0 18px 50px rgba(15,23,42,.22)}.warn-head{height:44px;padding:0 14px;background:#fff9df;border-bottom:1px solid #f0df9a;display:flex;align-items:center;font-size:14px;font-weight:700;color:#8a5a00}.warn-close{margin-left:auto;width:28px;height:28px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#475569;cursor:pointer}.warn-body{padding:12px;overflow:auto;max-height:calc(72vh - 44px)}.warn-empty{padding:24px;text-align:center;color:#64748b}.warn-item{border:1px solid #e2e8f0;border-left:4px solid #e3a008;border-radius:7px;padding:9px 10px;margin-bottom:8px;background:#fff}.warn-item.error{border-left-color:#dc2626;background:#fff7f7}.warn-item-title{font-size:12px;font-weight:700;color:#334155}.warn-item-meta{font-size:10px;color:#64748b;margin-top:3px}.warn-item-msg{font-size:11px;color:#475569;margin-top:5px;line-height:1.5}.workspace{background:var(--bg);border-top:1px solid #e5eaf0;position:relative;overflow:hidden}
+.workspace::before{content:'';position:absolute;inset:0;background:linear-gradient(#f8fafc 0,#eef3f8 46px,#eef3f8 100%);pointer-events:none}
+@media(max-width:900px){.shell{grid-template-columns:240px minmax(0,1fr)}.btn{padding:4px 8px}.brand{font-size:17px}}
+@media(max-width:600px){
+  .shell{display:flex!important;flex-direction:column!important}
+  .workspace{flex:1!important;min-height:0!important;width:100%!important;overflow:auto!important}
+  .topbar{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .topbar::-webkit-scrollbar{display:none}
+  .brand,.page-title,.top-actions{flex-shrink:0}
+}
+
+
+
+/* ===== 共通ヘッダー調整 v3：縦線1本・タイトル枠なし ===== */
+.logo,
+.brand,
+.app-brand{
+  border-right:0!important;
+  padding-right:0!important;
+}
+.header-badge-brand{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:30px!important;
+  padding:4px 13px!important;
+  border:1px solid #9dbcf8!important;
+  border-radius:999px!important;
+  background:#eaf2ff!important;
+  color:#1d4ed8!important;
+  font-size:15px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+}
+.header-title-separator{
+  width:1px!important;
+  height:30px!important;
+  background:#b7c3d2!important;
+  margin:0 6px!important;
+  flex:0 0 auto!important;
+}
+.header-badge-title{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:30px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#172033!important;
+  font-size:20px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+}
+@media(max-width:900px){
+  .header-badge-title{font-size:17px!important;}
+}
+
+
+/* ===== フェーズ2.5：メインメニュー右画面ダッシュボード ===== */
+.workspace{
+  background:#eef3f8;
+  border-top:1px solid #e5eaf0;
+  position:relative;
+  overflow:auto!important;
+  padding:16px;
+}
+.workspace::before{display:none!important}
+.dashboard{
+  position:relative;
+  z-index:1;
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.dash-hero{
+  background:#fff;
+  border:1px solid #d4dde8;
+  border-radius:10px;
+  padding:14px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.dash-hero-top{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.dash-fac-mark{
+  width:42px;
+  height:42px;
+  border-radius:9px;
+  background:var(--dash-color,#2f6fd6);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:700 13px/1 var(--mono);
+  flex:0 0 auto;
+}
+.dash-head-main{min-width:0;flex:1}
+.dash-code-line{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.dash-code{
+  font:700 20px/1 var(--mono);
+  color:#172033;
+}
+.dash-type{
+  font-size:10px;
+  font-weight:700;
+  padding:2px 6px;
+  border:1px solid currentColor;
+  border-radius:5px;
+  color:var(--dash-color,#2f6fd6);
+  background:#f8fafc;
+}
+.dash-status{
+  font-size:11px;
+  font-weight:700;
+  padding:3px 9px;
+  border-radius:999px;
+  border:1px solid #cbd5e1;
+  background:#f8fafc;
+  color:#475569;
+}
+.dash-status.draft{background:#fff7ed;border-color:#fed7aa;color:#d97706}
+.dash-status.published{background:#ecfdf3;border-color:#bbf7d0;color:#15803d}
+.dash-name{
+  margin-top:5px;
+  font-size:14px;
+  font-weight:700;
+  color:#172033;
+  line-height:1.4;
+}
+.dash-sub{
+  margin-top:4px;
+  font-size:11px;
+  color:#6b7b91;
+}
+.dash-month{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+}
+.dash-month-btn{
+  width:30px;
+  height:30px;
+  border:1px solid #b7c3d2;
+  border-radius:6px;
+  background:#fff;
+  color:#405069;
+  cursor:pointer;
+  font-size:16px;
+}
+.dash-month-label{
+  min-width:116px;
+  height:30px;
+  border:1px solid #cfe0fb;
+  border-radius:999px;
+  background:#edf4ff;
+  color:#1d4ed8;
+  font:700 13px/1 var(--font);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.dash-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid #edf1f5;
+}
+.dash-btn{
+  height:31px;
+  padding:4px 12px;
+  border-radius:7px;
+  border:1px solid #b7c3d2;
+  background:#fff;
+  color:#405069;
+  font:700 12px/1 var(--font);
+  cursor:pointer;
+}
+.dash-btn.primary{background:#eaf2ff;border-color:#9dbcf8;color:#1d4ed8}
+.dash-btn.purple{background:#f2ecff;border-color:#c4b5fd;color:#6d28d9}
+.dash-btn.green{background:#eaf8ef;border-color:#9fd8b8;color:#167445}
+.dash-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.dash-card{
+  background:#fff;
+  border:1px solid #d4dde8;
+  border-radius:10px;
+  padding:12px;
+  min-height:104px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.dash-card-title{
+  font-size:12px;
+  font-weight:700;
+  color:#405069;
+  margin-bottom:9px;
+}
+.dash-kv{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:4px 0;
+  border-bottom:1px dashed #e8edf4;
+}
+.dash-kv:last-child{border-bottom:0}
+.dash-k{font-size:11px;color:#6b7b91}
+.dash-v{font-size:12px;font-weight:700;color:#172033}
+.dash-v.warn{color:#dc2626}
+.dash-note-card{
+  background:#fff;
+  border:1px solid #d4dde8;
+  border-radius:10px;
+  padding:12px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.dash-note-head{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+.dash-note-title{
+  font-size:12px;
+  font-weight:700;
+  color:#405069;
+}
+.dash-note-state{
+  margin-left:auto;
+  font-size:11px;
+  color:#6b7b91;
+}
+.dash-note{
+  width:100%;
+  min-height:110px;
+  resize:vertical;
+  border:1px solid #b7c3d2;
+  border-radius:8px;
+  padding:9px 10px;
+  font:13px/1.6 var(--font);
+  color:#172033;
+  background:#fff;
+}
+.dash-note:focus{
+  outline:none;
+  border-color:#2f6fd6;
+  box-shadow:0 0 0 2px rgba(47,111,214,.12);
+}
+.dash-note-foot{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top:8px;
+}
+.dash-empty{
+  height:100%;
+  min-height:320px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#6b7b91;
+  font-size:13px;
+}
+@media(max-width:1100px){
+  .dash-grid{grid-template-columns:1fr}
+  .dash-month{width:100%;margin-left:0}
+}
+
+
+/* ===== フェーズ2.5：メインメニュー右画面デザイン統一 v2 ===== */
+.dash-hero{padding:13px 14px!important}
+.dash-hero-top{align-items:center!important}
+.dash-fac-mark{
+  width:auto!important;height:auto!important;min-height:28px!important;
+  padding:5px 10px!important;border-radius:999px!important;
+  background:#eaf2ff!important;border:1px solid #9dbcf8!important;
+  color:#1d4ed8!important;font:700 13px/1 var(--mono)!important;box-shadow:none!important
+}
+.dash-code{font-size:20px!important;color:var(--dash-color,#2f6fd6)!important}
+.dash-type{
+  min-height:20px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:2px 7px!important;border-radius:999px!important;background:#ecfeff!important;
+  border-color:#a5f3fc!important;color:#0f766e!important;font-size:10px!important
+}
+.dash-status{
+  min-height:22px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:3px 9px!important;border-radius:999px!important;font-size:10px!important
+}
+.dash-actions{display:none!important}
+.dash-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
+.dash-card{
+  position:relative!important;min-height:112px!important;padding:12px 12px 11px!important;
+  border-radius:9px!important;border:1px solid #d4dde8!important;background:#fff!important;
+  box-shadow:none!important;overflow:hidden!important
+}
+.dash-card::before{
+  content:''!important;position:absolute!important;left:0!important;top:0!important;bottom:0!important;
+  width:4px!important;background:var(--card-color,#2f6fd6)!important
+}
+.dash-card-title{
+  display:inline-flex!important;align-items:center!important;min-height:23px!important;
+  padding:3px 9px!important;margin:0 0 9px 0!important;border-radius:999px!important;
+  border:1px solid var(--card-border,#bfdbfe)!important;background:var(--card-bg,#eff6ff)!important;
+  color:var(--card-text,#1d4ed8)!important;font-size:11px!important;font-weight:700!important;line-height:1!important
+}
+.dash-card.request-card{--card-color:#2f6fd6;--card-bg:#eff6ff;--card-border:#bfdbfe;--card-text:#1d4ed8}
+.dash-card.shift-card{--card-color:#7c3aed;--card-bg:#f5f3ff;--card-border:#ddd6fe;--card-text:#6d28d9}
+.dash-card.facility-card{--card-color:#d97706;--card-bg:#fff7ed;--card-border:#fed7aa;--card-text:#c2410c}
+.dash-kv{min-height:23px!important;padding:4px 0!important;border-bottom:1px solid #edf1f5!important}
+.dash-k{
+  display:inline-flex!important;align-items:center!important;min-height:18px!important;padding:2px 6px!important;
+  border-radius:6px!important;background:#f8fafc!important;border:1px solid #e2e8f0!important;
+  color:#64748b!important;font-size:10px!important;font-weight:600!important
+}
+.dash-v{font-size:12px!important;font-weight:700!important;color:#172033!important}
+.dash-v.status-pill,.dash-v.version-pill,.dash-v.count-pill{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-height:20px!important;padding:2px 8px!important;border-radius:999px!important;
+  border:1px solid #cbd5e1!important;background:#f8fafc!important;color:#475569!important;
+  font-size:11px!important;font-weight:700!important
+}
+.dash-v.status-pill.draft{background:#fff7ed!important;border-color:#fed7aa!important;color:#d97706!important}
+.dash-v.status-pill.published{background:#ecfdf3!important;border-color:#bbf7d0!important;color:#15803d!important}
+.dash-v.warn{color:#dc2626!important}
+.dash-note-card{border-radius:9px!important;box-shadow:none!important}
+@media(max-width:1100px){.dash-grid{grid-template-columns:1fr!important}}
+
+
+/* ===== フェーズ2.5：メインメニュー仕上げ調整 v3 ===== */
+.workspace{padding:16px 18px!important;overflow:auto!important}
+.dashboard{max-width:1280px!important}
+.dash-hero{border-color:#d6e0ec!important;border-radius:10px!important;padding:14px 16px!important;background:#fff!important}
+.dash-hero-top{min-height:60px!important;align-items:center!important}
+.dash-fac-mark{display:none!important}
+.dash-code-line{gap:8px!important}
+.dash-code{font-size:22px!important;font-weight:700!important;line-height:1!important;color:var(--dash-color,#2f6fd6)!important}
+.dash-type{height:22px!important;padding:2px 8px!important;border-radius:999px!important;background:#ecfeff!important;border:1px solid #a5f3fc!important;color:#0f766e!important;font-size:10px!important;font-weight:700!important}
+.dash-status{height:22px!important;padding:3px 10px!important;border-radius:999px!important;background:#fff7ed!important;border:1px solid #fed7aa!important;color:#d97706!important;font-size:10px!important;font-weight:700!important}
+.dash-status.published{background:#ecfdf3!important;border-color:#bbf7d0!important;color:#15803d!important}
+.dash-month{gap:8px!important}
+.dash-month-btn{width:31px!important;height:31px!important;border-radius:7px!important;border:1px solid #b7c3d2!important;background:#fff!important;color:#405069!important;font-weight:700!important}
+.dash-month-label{min-width:120px!important;height:31px!important;border-radius:999px!important;background:#eaf2ff!important;border:1px solid #c7dbff!important;color:#1d4ed8!important;font-size:13px!important}
+.dash-actions{display:none!important}
+.dash-grid{margin-top:0!important;gap:12px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.dash-card{min-height:106px!important;padding:12px 13px 10px!important;border-radius:9px!important;border-color:#d4dde8!important;background:#fff!important;box-shadow:none!important;overflow:hidden!important}
+.dash-card::before{width:4px!important}
+.dash-card-title{min-height:22px!important;padding:3px 9px!important;margin-bottom:9px!important;border-radius:999px!important;font-size:11px!important}
+.dash-kv{min-height:25px!important;padding:4px 0!important;border-bottom:1px solid #edf1f5!important}
+.dash-k{min-width:54px!important;justify-content:center!important;min-height:19px!important;padding:2px 7px!important;border-radius:6px!important;background:#f8fafc!important;border:1px solid #e2e8f0!important;color:#64748b!important;font-size:10px!important}
+.dash-v{font-size:12px!important}
+.dash-v.status-pill,.dash-v.version-pill,.dash-v.count-pill{min-height:21px!important;padding:2px 8px!important;border-radius:999px!important}
+.dash-note-card{border-color:#d4dde8!important;border-radius:9px!important;background:#fff!important;padding:12px 13px!important}
+.dash-note-head{margin-bottom:8px!important}
+.dash-note-title{display:inline-flex!important;align-items:center!important;min-height:22px!important;padding:3px 9px!important;border-radius:999px!important;border:1px solid #d4dde8!important;background:#f8fafc!important;color:#405069!important;font-size:11px!important;font-weight:700!important}
+.dash-note{min-height:120px!important;border-radius:7px!important;border-color:#b7c3d2!important;font-size:13px!important}
+.dash-note-foot{margin-top:8px!important}
+.dash-note-foot .dash-btn{height:31px!important;border-radius:7px!important;background:#fff!important;border-color:#b7c3d2!important;color:#405069!important}
+.fac-card.selected{background:#edf4ff!important;border-color:#2f6fd6!important}
+.fac-card.selected .fac-body::after{background:#2f6fd6!important;color:#fff!important}
+html,body{overflow:hidden!important}
+@media(max-width:1100px){.dash-grid{grid-template-columns:1fr!important}}
+
+
+/* ===== フェーズ2.5：カード値表示修正 v4 ===== */
+.dash-v{
+  background:transparent!important;
+  border:0!important;
+  padding:0!important;
+  min-height:auto!important;
+  border-radius:0!important;
+  font-size:12px!important;
+  font-weight:700!important;
+  color:#172033!important;
+}
+.dash-v.count-pill{
+  background:transparent!important;
+  border:0!important;
+  padding:0!important;
+  border-radius:0!important;
+}
+.dash-v.unit-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:21px!important;
+  padding:2px 8px!important;
+  border-radius:999px!important;
+  background:#fff7ed!important;
+  border:1px solid #fed7aa!important;
+  color:#c2410c!important;
+  font-size:11px!important;
+  font-weight:700!important;
+}
+.dash-v.version-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:21px!important;
+  padding:2px 8px!important;
+  border-radius:999px!important;
+  background:#eaf2ff!important;
+  border:1px solid #bfdbfe!important;
+  color:#1d4ed8!important;
+  font-size:11px!important;
+  font-weight:700!important;
+}
+.dash-v.status-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:21px!important;
+  padding:2px 8px!important;
+  border-radius:999px!important;
+  background:#fff7ed!important;
+  border:1px solid #fed7aa!important;
+  color:#d97706!important;
+  font-size:11px!important;
+  font-weight:700!important;
+}
+.dash-v.status-pill.published{
+  background:#ecfdf3!important;
+  border-color:#bbf7d0!important;
+  color:#15803d!important;
+}
+
+/* ===== Phase3 全事業所シフト作成状況ダッシュボード ===== */
+.dash-all-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:4px 0;}
+@media(max-width:1100px){.dash-all-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
+@media(max-width:700px){.dash-all-list{grid-template-columns:1fr!important;}}
+.dash-all-card{
+  position:relative;border-radius:10px;border:1px solid #d4dde8;
+  background:#fff;overflow:hidden;padding:0;min-width:0;
+}
+.dash-all-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--fac-color,#2f6fd6);
+}
+.dash-all-card-header{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:10px 14px 10px 16px;border-bottom:1px solid #edf1f5;
+}
+.dash-all-fac-code{font-size:15px;font-weight:700;line-height:1;}
+.dash-all-fac-name{font-size:13px;font-weight:600;color:#172033;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-all-status{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid #cbd5e1;background:#f8fafc;color:#475569;}
+.dash-all-status.draft{background:#fff7ed;border-color:#fed7aa;color:#d97706;}
+.dash-all-status.published{background:#ecfdf3;border-color:#bbf7d0;color:#15803d;}
+.dash-all-version{font-size:11px;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:2px 8px;}
+.dash-all-warn{font-size:11px;color:#dc2626;font-weight:700;}
+.dash-all-body{display:flex;gap:16px;padding:8px 16px;border-bottom:1px solid #edf1f5;}
+.dash-all-row{display:flex;align-items:center;gap:6px;}
+.dash-all-k{font-size:10px;font-weight:600;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:2px 6px;}
+.dash-all-v{font-size:12px;font-weight:700;color:#172033;}
+/* ユニット別充足率（カード内常時表示） */
+.dash-unit-summary{padding:6px 16px;border-bottom:1px solid #edf1f5;overflow-x:auto;}
+.dash-unit-empty{font-size:11px;color:#94a3b8;padding:4px 0;}
+.dash-unit-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:11px;}
+.dash-unit-table th{background:#f1f5f9;color:#475569;font-weight:700;padding:3px 6px;border:1px solid #e2e8f0;text-align:center;}
+.dash-unit-table td{padding:3px 6px;border:1px solid #e2e8f0;text-align:center;}
+.unit-name{text-align:left;font-weight:600;white-space:nowrap;color:#334155;}
+.fac-total-row td{background:#f8fafc;font-weight:700;}
+.fac-total-label{text-align:left;color:#172033;}
+.suf-ok{color:#15803d;font-weight:700;}
+.suf-warn-y{color:#d97706;font-weight:700;}
+.dash-na{color:#94a3b8;}
+.suf-help{color:#2563eb;font-weight:700;}
+.suf-surplus{color:#15803d;font-weight:700;}
+
+.dash-all-sufficiency{padding:8px 16px;border-bottom:1px solid #edf1f5;}
+.dash-sufficiency-toggle{
+  background:none;border:1px solid #b7c3d2;border-radius:6px;
+  padding:4px 10px;font-size:12px;font-weight:600;color:#405069;
+  cursor:pointer;transition:background .15s;
+}
+.dash-sufficiency-toggle:hover{background:#f1f5f9;}
+.dash-sufficiency-body{margin-top:8px;overflow-x:auto;}
+.dash-suf-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:11px;}
+.dash-suf-table th{background:#f1f5f9;color:#475569;font-weight:700;padding:4px 6px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;}
+.dash-suf-table td{padding:4px 6px;border:1px solid #e2e8f0;text-align:center;}
+.suf-name{text-align:left;font-weight:600;white-space:nowrap;position:sticky;left:0;background:#fff;z-index:1;border-right:2px solid #cbd5e1;}
+.dash-suf-table thead th:first-child{position:sticky;left:0;background:#f1f5f9;z-index:2;border-right:2px solid #cbd5e1;}
+.suf-num{min-width:32px;}
+.suf-warn{color:#dc2626;font-weight:700;}
+.dash-suf-loading{font-size:12px;color:#64748b;padding:4px 0;}
+/* コメント欄 */
+.dash-all-comment-row{padding:10px 16px;}
+.dash-all-comment-label{font-size:11px;font-weight:700;color:#405069;margin-bottom:5px;}
+.dash-all-comment{
+  width:100%;min-height:48px;border:1px solid #b7c3d2;border-radius:7px;
+  font-size:12px;padding:6px 8px;resize:vertical;box-sizing:border-box;
+  font-family:inherit;color:#172033;
+}
+.dash-all-comment-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:5px;}
+.dash-all-note-state{font-size:11px;color:#64748b;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand header-badge-brand" href="/">GHShift</a>
+  <span class="header-title-separator" aria-hidden="true"></span>
+  <div class="page-title header-badge-title">メインメニュー</div>
+  <nav class="top-actions">
+    <a class="btn" id="nav-staff" href="/staff">職員</a>
+    <a class="btn" id="nav-facility" href="/facility">事業所</a>
+    <a class="btn" id="nav-settings" href="/permissions">設定</a>
+    <span id="nav-user-badge" style="display:none;align-items:center;gap:5px;font-size:11px;color:var(--text2,#555);padding:0 8px;border-left:1px solid #e0e0e0">
+      <span id="nav-user-icon" style="width:22px;height:22px;border-radius:50%;background:#2f6fd6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">—</span>
+      <span id="nav-user-name" style="font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span>
+    </span>
+    <button class="btn" type="button" onclick="logout()">ログアウト</button>
+  </nav>
+</header>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">事業所一覧</div>
+    <div id="fac-list" class="fac-list"></div>
+  </aside>
+  <main class="workspace" aria-label="作業領域">
+    <div id="dashboard" class="dashboard"></div>
+  </main>
+</div>
+<div class="shift-modal" id="shift-modal" onclick="closeShiftWizard(event)">
+  <section class="shift-dialog" role="dialog" aria-modal="true" aria-labelledby="shift-modal-title" onclick="event.stopPropagation()">
+    <div class="shift-head"><span id="shift-modal-title">シフト新規作成</span><button class="shift-close" type="button" onclick="closeShiftWizard()">×</button></div>
+    <div class="shift-body">
+      <div class="shift-row">
+        <label class="shift-label" for="shift-fac-select">事業所</label>
+        <select class="shift-select" id="shift-fac-select"></select>
+      </div>
+      <div class="shift-row">
+        <div class="shift-label">対象月</div>
+        <div class="shift-month">
+          <button class="shift-month-btn" type="button" onclick="changeShiftWizardMonth(-1)">‹</button>
+          <span class="shift-month-label" id="shift-month-label">----</span>
+          <button class="shift-month-btn" type="button" onclick="changeShiftWizardMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="shift-note" id="shift-modal-note"></div>
+    </div>
+    <div class="shift-foot">
+      <button class="btn" type="button" onclick="closeShiftWizard()">キャンセル</button>
+      <button class="btn primary" id="shift-modal-ok" type="button" onclick="confirmShiftWizard()">作成開始</button>
+    </div>
+  </section>
+</div>
+<div class="warn-modal" id="warn-modal" onclick="closeWarnings(event)">
+  <section class="warn-dialog" role="dialog" aria-modal="true" aria-labelledby="warn-title" onclick="event.stopPropagation()">
+    <div class="warn-head"><span id="warn-title">警告内容</span><button class="warn-close" type="button" onclick="closeWarnings()">×</button></div>
+    <div class="warn-body" id="warn-body"></div>
+  </section>
+</div>
+<script>
+const now=new Date(),YEAR=now.getFullYear(),MONTH=now.getMonth()+1;
+let FAC=[],STAFF=[],VERS=[],WARNS=[],selectedCode='',shiftModalMode='new',targetYear=YEAR,targetMonth=MONTH,dashNoteSaveTimer=null;
+const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+const unitInitial=s=>{const t=String(s||'').trim();return t?esc(t.charAt(0)):'-';};
+const renderUnitBadge=units=>{if(!units.length)return '<span class="unit-badge empty">ユニット:-</span>';const initials=units.map(u=>unitInitial(u.name)).join('');const fullNames=units.map(u=>u.name||'').join('・');return `<span class="unit-badge" title="${esc(fullNames)}">ユニット:${initials}</span>`;};
+const statusInfo=(v,withDate)=>{
+  if(!v)return {text:'未作成',cls:''};
+  const st=String(v.status||'draft');
+  const ym=withDate&&v.year&&v.month?` ${v.year}年${v.month}月`:'';
+  if(['published','fixed'].includes(st))return {text:`公開中${ym}`,cls:'published'};
+  if(['manager_approved'].includes(st))return {text:`管理者承認済${ym}`,cls:''};
+  if(['leader_approved','approved','submitted'].includes(st))return {text:`リーダー承認済${ym}`,cls:''};
+  return {text:`作成中${ym}`,cls:'draft'};
+};
+const currentVersion=fac=>{
+  if(!fac)return null;
+  const matches=VERS.filter(v=>v.facility_id===fac.id);
+  if(!matches.length)return null;
+  // 最新年月→最新版を返す
+  return matches.sort((a,b)=>
+    (Number(b.year||0)-Number(a.year||0)) ||
+    (Number(b.month||0)-Number(a.month||0)) ||
+    (Number(b.version_no||0)-Number(a.version_no||0))
+  )[0];
+};
+const selectedFacility=()=>FAC.find(f=>f.code===selectedCode)||FAC[0]||null;
+const staffOfFac=fac=>fac?STAFF.filter(s=>s.facility_id===fac.id || s.fac_code===fac.code):[];
+const warningsOfFac=fac=>fac?WARNS.filter(w=>w.facility===fac.code||w.fac===fac.code):[];
+
+async function init(){
+  try{
+    [FAC,STAFF,VERS,WARNS]=await Promise.all([
+      fetch('/api/facilities').then(r=>r.json()),
+      fetch('/api/staff').then(r=>r.json()),
+      fetch('/api/shifts/versions/all').then(r=>r.json()).catch(()=>[]),
+      fetch(`/api/rules/check/${YEAR}/${MONTH}`).then(r=>r.json()).catch(()=>[])
+    ]);
+  }catch(e){FAC=[];STAFF=[];VERS=[];WARNS=[];}
+  // ログイン中ユーザーをヘッダーに表示
+  try{
+    const me = await fetch('/api/auth/me').then(r=>r.json()).catch(()=>null);
+    if(me && me.ok){
+      const badge = document.getElementById('nav-user-badge');
+      const icon  = document.getElementById('nav-user-icon');
+      const name  = document.getElementById('nav-user-name');
+      if(badge) badge.style.display='flex';
+      if(icon)  icon.textContent = (me.user.name||'?').charAt(0);
+      if(name)  name.textContent = me.user.name || me.user.id;
+      // 管理系ボタンをperm値で制御
+      const perms = me.user.perms || {};
+      const ns = document.getElementById('nav-staff');
+      const nf = document.getElementById('nav-facility');
+      const ng = document.getElementById('nav-settings');
+      if(ns) ns.style.display = perms.perm_staff    ? '' : 'none';
+      if(nf) nf.style.display = perms.perm_facility ? '' : 'none';
+      if(ng) ng.style.display = perms.perm_settings ? '' : 'none';
+    }
+  }catch(e){}
+  selectedCode=FAC[0]?.code||'';
+  renderFacilities();
+  renderDashboard();
+}
+function renderFacilities(){
+  document.getElementById('fac-list').innerHTML=FAC.map(f=>{
+    const staffCount=STAFF.filter(s=>s.facility_id===f.id || s.fac_code===f.code).length;
+    const unitList=(f.units||[]);
+    const unitBadge=renderUnitBadge(unitList);
+    const warningCount=WARNS.filter(w=>w.facility===f.code||w.fac===f.code).length;
+    const version=currentVersion(f);
+    const st=statusInfo(version);
+    const isSelected=selectedCode===f.code;
+
+    // 既存シフトの有無
+    const hasVersion=!!version;
+
+    // 展開アクションボタン（選択中のみ表示）
+    const actionBtns=isSelected?`
+      <div class="fac-actions" onclick="event.stopPropagation()">
+        <div class="fac-month-row">
+          <button class="fac-month-btn" type="button" onclick="changeFacMonth(-1)">‹</button>
+          <span class="fac-month-label" id="fac-month-label-${esc(f.code)}">${targetYear}年${targetMonth}月</span>
+          <button class="fac-month-btn" type="button" onclick="changeFacMonth(1)">›</button>
+        </div>
+        <div class="fac-btn-row">
+          <button class="fac-btn fac-btn-new" onclick="goNewShift('${esc(f.code)}')">＋ 新規作成</button>
+          ${hasVersion?`<button class="fac-btn fac-btn-open" onclick="goOpenShift('${esc(f.code)}')">シフトを開く</button>`:''}
+        </div>
+      </div>`:'';
+
+    return `<article class="fac-card ${isSelected?'selected':''}" style="--fac-color:${esc(f.color||'#2f6fd6')}" onclick="selectFacility('${esc(f.code)}')">
+      <div class="fac-body">
+        <div class="fac-head"><span class="fac-code" style="color:${esc(f.color||'#2f6fd6')}">${esc(f.code)}</span><span class="fac-type" style="color:${esc(f.color||'#2f6fd6')}">${esc(f.type)}</span><span class="status ${st.cls}">${st.text}</span></div>
+        <div class="fac-name">${esc(f.name)}</div>
+        <div class="meta-row">
+          <div class="meta-group">${unitBadge}</div>
+          <span class="meta-sep" aria-hidden="true"></span>
+          <div class="meta-group"><span class="meta-label">職員</span><span class="meta-value">${staffCount}名</span></div>
+          <span class="meta-sep" aria-hidden="true"></span>
+          <div class="meta-group"><span class="meta-label">警告</span><span class="meta-value warning-click ${warningCount?'warn':''}" onclick="showWarnings('${esc(f.code)}',event)">${warningCount?`${warningCount}件`:'0件'}</span></div>
+        </div>
+      </div>
+      ${actionBtns}
+    </article>`;
+  }).join('');
+}
+
+function goNewShift(code){
+  selectedCode=code;
+  localStorage.setItem('careshift_facility',code);
+  location.href=`/shift?facility=${encodeURIComponent(code)}&step=1&year=${targetYear}&month=${targetMonth}&new=1`;
+}
+function goOpenShift(code){
+  selectedCode=code;
+  localStorage.setItem('careshift_facility',code);
+  location.href=`/shift?facility=${encodeURIComponent(code)}&step=3&year=${targetYear}&month=${targetMonth}`;
+}
+function selectFacility(code){selectedCode=code;localStorage.setItem('careshift_facility',code);renderFacilities();renderDashboard();}
+
+function changeFacMonth(delta){
+  const d=new Date(targetYear,targetMonth-1+delta,1);
+  targetYear=d.getFullYear();
+  targetMonth=d.getMonth()+1;
+  renderFacilities();
+  renderDashboard();
+}
+function changeDashboardMonth(delta){changeFacMonth(delta);}
+async function loadDashboardNote(fac){
+  if(!fac)return '';
+  try{
+    const r=await fetch(`/api/dashboard_note/${targetYear}/${targetMonth}?facility_code=${encodeURIComponent(fac.code)}`);
+    const d=await r.json();
+    if(d.ok)return d.note||'';
+  }catch(e){}
+  return '';
+}
+async function renderDashboard(){
+  const root=document.getElementById('dashboard');
+  if(!root)return;
+  if(!FAC||!FAC.length){
+    root.innerHTML='<div class="dash-empty">事業所が登録されていません。</div>';
+    return;
+  }
+  // 全事業所のシフト作成状況カードを生成
+  const cards = FAC.map(f=>{
+    const version=currentVersion(f);
+    const st=statusInfo(version, true);
+    const warnings=warningsOfFac(f);
+    const staffs=staffOfFac(f);
+    const color=f.color||'#2f6fd6';
+    const cardId=`dash-fac-${esc(f.code)}`;
+    return `
+    <div class="dash-all-card" id="${cardId}" style="--fac-color:${esc(color)}">
+      <div class="dash-all-card-header">
+        <span class="dash-all-fac-code" style="color:${esc(color)}">${esc(f.code)}</span>
+        <span class="dash-all-fac-name">${esc(f.name)}</span>
+        <span class="dash-all-status status-pill ${st.cls}">${st.text}</span>
+        ${version?`<span class="dash-all-version">第${esc(String(version.version_no||1))}版</span>`:''}
+        ${warnings.length?`<span class="dash-all-warn warn" style="cursor:pointer" onclick="showWarnings('${esc(f.code)}',event)">${warnings.length}件警告</span>`:''}
+      </div>
+      <div class="dash-all-body">
+        <div class="dash-all-row"><span class="dash-all-k">職員数</span><span class="dash-all-v">${staffs.length}名</span></div>
+        <div class="dash-all-row"><span class="dash-all-k">自動作成</span><span class="dash-all-v">${Number(f.auto_shift||0)?'対象':'対象外'}</span></div>
+      </div>
+      <div class="dash-unit-summary" id="unit-summary-${esc(f.code)}">
+        <div class="dash-suf-loading">読み込み中...</div>
+      </div>
+      <div class="dash-all-sufficiency">
+        <button class="dash-sufficiency-toggle" type="button" onclick="toggleSufficiency('${esc(f.code)}')" data-code="${esc(f.code)}">▶ 充足率を表示</button>
+        <div class="dash-sufficiency-body" id="sufficiency-${esc(f.code)}" style="display:none"></div>
+      </div>
+      <div class="dash-all-comment-row">
+        <div class="dash-all-comment-label">コメント欄</div>
+        <textarea class="dash-all-comment" id="note-${esc(f.code)}" placeholder="作成メモ・申し送りなど" oninput="scheduleNoteAutoSave('${esc(f.code)}')"></textarea>
+        <div class="dash-all-comment-foot">
+          <span class="dash-all-note-state" id="note-state-${esc(f.code)}"></span>
+          <button class="dash-btn" type="button" onclick="saveNoteForFac('${esc(f.code)}')">保存</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  root.innerHTML=`<div class="dash-all-list">${cards}</div>`;
+  // 各事業所のコメントとユニット別充足率を非同期ロード
+  for(const f of FAC){
+    const note=await loadDashboardNote(f);
+    const ta=document.getElementById(`note-${f.code}`);
+    if(ta)ta.value=note;
+    // ユニット別充足率を自動ロード
+    loadUnitSummary(f.code);
+  }
+}
+
+// ユニット別・事業所集計をカード内に常時表示
+async function loadUnitSummary(code){
+  const el=document.getElementById(`unit-summary-${code}`);
+  if(!el)return;
+  try{
+    const r=await fetch(`/api/shift_summary?facility_code=${encodeURIComponent(code)}&year=${targetYear}&month=${targetMonth}`);
+    const d=await r.json();
+    if(!d.ok||!d.unit_summary||!d.unit_summary.length){
+      el.innerHTML='<div class="dash-unit-empty">充足率データなし（シフト保存後に表示）</div>';
+      return;
+    }
+    const rateCell=(rate)=>{
+      if(rate===null||rate===undefined) return '<td class="suf-num dash-na">-</td>';
+      const cls=rate>=100?'suf-ok':rate>=80?'suf-warn-y':'suf-warn';
+      return `<td class="suf-num ${cls}">${rate}%</td>`;
+    };
+    const unitRows=d.unit_summary.map(u=>`
+      <tr class="unit-row">
+        <td class="suf-name unit-name">${esc(u.unit_name)}</td>
+        <td class="suf-num">${u.contract}</td>
+        <td class="suf-num">${u.total}</td>
+        <td class="suf-num">${u.early}</td>
+        <td class="suf-num">${u.late}</td>
+        <td class="suf-num">${u.night}</td>
+        <td class="suf-num">${u.ake}</td>
+        <td class="suf-num">${u.day}</td>
+        <td class="suf-num ${u.help>0?'suf-help':''}">${u.help}</td>
+        <td class="suf-num ${u.surplus<0?'suf-warn':u.surplus>0?'suf-surplus':''}">${u.surplus}</td>
+        ${rateCell(u.rate)}
+      </tr>`).join('');
+    const fs=d.fac_summary;
+    const facRow=fs?`
+      <tr class="fac-total-row">
+        <td class="suf-name fac-total-label">事業所計</td>
+        <td class="suf-num">${fs.contract}</td>
+        <td class="suf-num">${fs.total}</td>
+        <td class="suf-num">-</td>
+        <td class="suf-num">-</td>
+        <td class="suf-num">-</td>
+        <td class="suf-num">-</td>
+        <td class="suf-num">-</td>
+        <td class="suf-num ${fs.help>0?'suf-help':''}">${fs.help}</td>
+        <td class="suf-num ${fs.surplus<0?'suf-warn':fs.surplus>0?'suf-surplus':''}">${fs.surplus}</td>
+        ${rateCell(fs.rate)}
+      </tr>`:'';
+    el.innerHTML=`
+      <table class="dash-suf-table dash-unit-table">
+        <thead><tr>
+          <th>ユニット</th><th>契約</th><th>割当</th>
+          <th>早</th><th>遅</th><th>夜</th><th>明</th><th>日</th>
+          <th>ﾍﾙﾌﾟ</th><th>余剰</th><th>活用率</th>
+        </tr></thead>
+        <tbody>${unitRows}${facRow}</tbody>
+      </table>`;
+  }catch(e){
+    el.innerHTML='<div class="dash-unit-empty">取得エラー</div>';
+  }
+}
+
+// 充足率アコーディオン開閉（個人別）
+async function toggleSufficiency(code){
+  const body=document.getElementById(`sufficiency-${code}`);
+  const btn=document.querySelector(`[data-code="${code}"].dash-sufficiency-toggle`);
+  if(!body||!btn)return;
+  if(body.style.display!=='none'){
+    body.style.display='none';
+    btn.textContent='▶ 充足率を表示';
+    return;
+  }
+  btn.textContent='▼ 充足率を非表示';
+  body.style.display='block';
+  if(body.dataset.loaded){return;}
+  body.dataset.loaded='1';
+  body.innerHTML='<div class="dash-suf-loading">読み込み中...</div>';
+  try{
+    const fac=FAC.find(f=>f.code===code);
+    if(!fac){body.innerHTML='<div class="dash-suf-loading">事業所不明</div>';return;}
+    const r=await fetch(`/api/shift_summary?facility_code=${encodeURIComponent(code)}&year=${targetYear}&month=${targetMonth}`);
+    const d=await r.json();
+    if(!d.ok||!d.summary||!d.summary.length){
+      body.innerHTML='<div class="dash-suf-loading">集計データなし（シフト保存後に表示されます）</div>';
+      return;
+    }
+    const rows=d.summary.map(s=>`
+      <tr>
+        <td class="suf-name">${esc(s.name)}</td>
+        <td class="suf-num">${s.early??'-'}</td>
+        <td class="suf-num">${s.late??'-'}</td>
+        <td class="suf-num">${s.night??'-'}</td>
+        <td class="suf-num">${s.day??'-'}</td>
+        <td class="suf-num">${s.total??'-'}</td>
+        <td class="suf-num">${s.contract??'-'}</td>
+        <td class="suf-num ${(s.remaining<0)?'suf-warn':''}">${s.remaining??'-'}</td>
+        <td class="suf-num">${s.rate!=null?s.rate+'%':'-'}</td>
+      </tr>`).join('');
+    body.innerHTML=`
+      <table class="dash-suf-table">
+        <thead><tr>
+          <th>氏名</th><th>早</th><th>遅</th><th>夜</th><th>日</th><th>計</th><th>契</th><th>残</th><th>率</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }catch(e){
+    body.innerHTML='<div class="dash-suf-loading">取得エラー</div>';
+  }
+}
+
+// 事業所ごとのコメント保存
+const _noteTimers={};
+function scheduleNoteAutoSave(code){
+  const state=document.getElementById(`note-state-${code}`);
+  if(state)state.textContent='未保存';
+  clearTimeout(_noteTimers[code]);
+  _noteTimers[code]=setTimeout(()=>saveNoteForFac(code),900);
+}
+async function saveNoteForFac(code){
+  const fac=FAC.find(f=>f.code===code);
+  const ta=document.getElementById(`note-${code}`);
+  const state=document.getElementById(`note-state-${code}`);
+  if(!fac||!ta)return;
+  if(state)state.textContent='保存中...';
+  try{
+    const r=await fetch('/api/dashboard_note',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({facility_code:code,year:targetYear,month:targetMonth,note:ta.value})});
+    const d=await r.json();
+    if(!d.ok)throw new Error(d.error||'保存に失敗しました');
+    if(state)state.textContent='保存済み';
+    setTimeout(()=>{if(state&&state.textContent==='保存済み')state.textContent='';},1800);
+  }catch(e){
+    if(state)state.textContent='保存失敗';
+  }
+}
+
+function showWarnings(code,event){
+  if(event){event.stopPropagation();}
+  selectFacility(code);
+  const fac=FAC.find(f=>f.code===code);
+  const list=WARNS.filter(w=>w.facility===code||w.fac===code);
+  document.getElementById('warn-title').textContent=`${code} 警告内容`;
+  document.getElementById('warn-body').innerHTML=list.length?list.map(w=>{
+    const title=esc(w.rule||w.type||'警告');
+    const meta=[w.date,w.staff_name,w.unit].filter(Boolean).map(esc).join(' ／ ');
+    const msg=esc(w.message||w.msg||'警告内容を確認してください');
+    const cls=String(w.type||'').toLowerCase()==='error'?' error':'';
+    return `<div class="warn-item${cls}"><div class="warn-item-title">${title}</div>${meta?`<div class="warn-item-meta">${meta}</div>`:''}<div class="warn-item-msg">${msg}</div></div>`;
+  }).join(''):'<div class="warn-empty">現在、警告はありません。</div>';
+  document.getElementById('warn-modal').classList.add('open');
+}
+function closeWarnings(event){if(event&&event.target!==document.getElementById('warn-modal'))return;document.getElementById('warn-modal').classList.remove('open');}
+function openShift(step){
+  if(!selectedCode){alert('事業所を選択してください');return;}
+  location.href=`/shift?facility=${encodeURIComponent(selectedCode)}&step=${step}&year=${targetYear}&month=${targetMonth}`;
+}
+function fillShiftFacilitySelect(){
+  const sel=document.getElementById('shift-fac-select');
+  if(!sel)return;
+  sel.innerHTML=FAC.map(f=>`<option value="${esc(f.code)}">${esc(f.code)}　${esc(f.name)}</option>`).join('');
+  sel.value=selectedCode||FAC[0]?.code||'';
+}
+function updateShiftWizard(){
+  const title=document.getElementById('shift-modal-title');
+  const ok=document.getElementById('shift-modal-ok');
+  const note=document.getElementById('shift-modal-note');
+  const label=document.getElementById('shift-month-label');
+  if(label)label.textContent=`${targetYear}年${targetMonth}月`;
+  if(shiftModalMode==='new'){
+    if(title)title.textContent='シフト新規作成';
+    if(ok)ok.textContent='作成開始';
+    if(note)note.innerHTML='選択した事業所・対象月で、<b>希望日入力</b>から開始します。<br>曜日固定設定は、希望日入力画面の［曜日固定設定］ボタンから必要時に反映します。';
+  }else{
+    if(title)title.textContent='既存シフトを開く';
+    if(ok)ok.textContent='開く';
+    if(note)note.innerHTML='選択した事業所・対象月の<b>シフト確認・調整</b>画面を開きます。<br>既に作成済みのシフトを確認・修正する時に使用します。';
+  }
+}
+function openShiftWizard(mode){
+  if(!selectedCode){selectedCode=FAC[0]?.code||'';}
+  if(!selectedCode){alert('事業所を選択してください');return;}
+  shiftModalMode=mode==='open'?'open':'new';
+  fillShiftFacilitySelect();
+  updateShiftWizard();
+  document.getElementById('shift-modal')?.classList.add('open');
+}
+function closeShiftWizard(event){
+  if(event&&event.target!==document.getElementById('shift-modal'))return;
+  document.getElementById('shift-modal')?.classList.remove('open');
+}
+function changeShiftWizardMonth(delta){
+  const d=new Date(targetYear,targetMonth-1+delta,1);
+  targetYear=d.getFullYear();
+  targetMonth=d.getMonth()+1;
+  updateShiftWizard();
+}
+function confirmShiftWizard(){
+  const sel=document.getElementById('shift-fac-select');
+  const code=sel?.value||selectedCode;
+  if(!code){alert('事業所を選択してください');return;}
+  selectedCode=code;
+  const step=shiftModalMode==='new'?1:3;
+  const newFlag=shiftModalMode==='new'?'&new=1':'';
+  location.href=`/shift?facility=${encodeURIComponent(code)}&step=${step}&year=${targetYear}&month=${targetMonth}${newFlag}`;
+}
+function toggleSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+async function logout(){await fetch('/api/auth/logout',{method:'POST'}).catch(()=>{});location.href='/login';}
+init();
+</script>
+</body>
+</html>

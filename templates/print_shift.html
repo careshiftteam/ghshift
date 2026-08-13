@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>GHShift｜シフト表印刷</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Yu Gothic UI','Meiryo',sans-serif;background:#f1f5f9;color:#111827}
+
+/* ── 画面表示用（印刷前のコントロールバー） ── */
+.toolbar{
+  position:sticky;top:0;z-index:100;
+  background:#fff;border-bottom:1px solid #cbd5e1;
+  padding:10px 16px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 1px 4px rgba(15,23,42,.08);
+}
+.toolbar h1{font-size:15px;font-weight:700;color:#172033;margin-right:auto}
+.toolbar button{
+  height:34px;padding:0 16px;border-radius:7px;border:1px solid #1d4ed8;
+  background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+}
+.toolbar button.ghost{background:#fff;color:#475569;border-color:#c7d0dc}
+.loading{padding:40px;text-align:center;color:#64748b;font-size:13px}
+
+/* ── 印刷ページ本体 ── */
+.print-page{
+  background:#fff;
+  width:297mm;min-height:200mm;
+  margin:16px auto;padding:8mm 8mm;
+  box-shadow:0 1px 6px rgba(15,23,42,.15);
+}
+.page-header{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:4mm;border-bottom:2px solid #172033;padding-bottom:2mm;
+}
+.page-title{font-size:15px;font-weight:700;color:#172033}
+.page-sub{font-size:10px;color:#475569}
+
+table.shift-table{
+  width:100%;border-collapse:collapse;table-layout:fixed;
+}
+.shift-table th, .shift-table td{
+  border:0.5px solid #94a3b8;text-align:center;
+  font-size:7.2pt;padding:1px 0;overflow:hidden;white-space:nowrap;
+}
+.shift-table thead th{
+  background:#eef2f7;font-weight:700;font-size:7pt;
+}
+.shift-table .col-name{
+  width:48px;text-align:left;padding-left:3px;font-size:7pt;font-weight:600;
+}
+.shift-table td.sat{background:#eaf2ff}
+.shift-table td.sun{background:#fdecec}
+.shift-table th.sat{color:#1d4ed8}
+.shift-table th.sun{color:#dc2626}
+.shift-table .unit-row td{
+  background:#dbe7f7;font-weight:700;text-align:left;padding-left:4px;font-size:7.5pt;
+}
+
+/* シフト種別の色（画面表示と同系統に簡略化） */
+.s-早{color:#0e7d3a}
+.s-遅{color:#b45309}
+.s-夜{color:#7c3aed}
+.s-明{color:#7c3aed;opacity:.6}
+.s-休{color:#94a3b8}
+.s-希休{color:#94a3b8}
+.s-有給{color:#0369a1}
+.s-欠勤{color:#dc2626}
+.s-日{color:#15803d}
+
+@media print{
+  body{background:#fff}
+  .toolbar{display:none}
+  .print-page{
+    box-shadow:none;margin:0;width:auto;min-height:0;
+    page-break-after:always;
+  }
+  .print-page:last-child{page-break-after:auto}
+  @page{size:A4 landscape;margin:8mm}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1 id="tb-title">GHShift｜シフト表印刷</h1>
+  <button class="ghost" onclick="window.close()">閉じる</button>
+  <button onclick="window.print()">🖨️ 印刷する</button>
+</div>
+
+<div id="root">
+  <div class="loading">読み込み中...</div>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const YEAR = parseInt(params.get('year'));
+const MONTH = parseInt(params.get('month'));
+const FAC_CODE = params.get('facility'); // 単一事業所コード、または 'GH_ALL'
+
+const SHIFT_TYPES_WORK = ['早','遅','夜','明','日']; // 勤務扱い（非休）
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ユニット名のプレフィックスから元施設コードを判定
+// 例: "GH1_ユニット1" → "GH1", "GH2_寿庵" → "GH2", "彩咲庵"（プレフィックスなし）→ そのまま1グループ
+function originFacCodeOfUnit(unitName){
+  const m = String(unitName||'').match(/^([A-Z]+\d+)_/);
+  return m ? m[1] : '__SINGLE__';
+}
+function unitDisplayName(name){
+  if(!name) return name;
+  return String(name).replace(/^[A-Z]+\d+_/, '');
+}
+
+async function main(){
+  if(!YEAR || !MONTH || !FAC_CODE){
+    document.getElementById('root').innerHTML = '<div class="loading">パラメータが不足しています（year/month/facility）</div>';
+    return;
+  }
+
+  const [facilities, allStaff] = await Promise.all([
+    fetch('/api/facilities').then(r=>r.json()),
+    fetch('/api/staff?all=1').then(r=>r.json()).catch(()=>fetch('/api/staff').then(r=>r.json())),
+  ]);
+
+  // 対象事業所の決定
+  let targetFacs = [];
+  if(FAC_CODE === 'GH_ALL'){
+    targetFacs = facilities.filter(f=>f.type==='GH');
+  } else {
+    const f = facilities.find(f=>f.code===FAC_CODE);
+    if(f) targetFacs = [f];
+  }
+  if(!targetFacs.length){
+    document.getElementById('root').innerHTML = '<div class="loading">対象事業所が見つかりません</div>';
+    return;
+  }
+
+  document.getElementById('tb-title').textContent =
+    `GHShift｜シフト表印刷　${targetFacs.map(f=>f.name).join('・')}　${YEAR}年${MONTH}月`;
+
+  // シフトデータをまとめて取得（事業所ごと）
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+
+  for(const fac of targetFacs){
+    const entries = await fetch(`/api/shifts/${YEAR}/${MONTH}?facility=${fac.code}&_=${Date.now()}`,{cache:'no-store'})
+      .then(r=>r.json()).catch(()=>[]);
+
+    const facStaff = allStaff.filter(s=>s.facility_id===fac.id && s.is_active);
+    const units = (fac.units||[]).slice().sort((a,b)=>(a.unit_no||0)-(b.unit_no||0));
+
+    // unit_id → シフトentry群
+    const entryMap = {}; // `${staff_id}_${day}` -> shift_type
+    entries.forEach(e=>{
+      const day = parseInt(e.date.split('-')[2]);
+      entryMap[`${e.staff_id}_${day}`] = e.shift_type;
+    });
+
+    // ユニットを元施設コードでグルーピング（改ページ単位）
+    const groups = {}; // originCode -> {label, units:[]}
+    units.forEach(u=>{
+      const origin = originFacCodeOfUnit(u.name);
+      if(!groups[origin]) groups[origin] = { label: origin==='__SINGLE__' ? fac.name : origin, units: [] };
+      groups[origin].units.push(u);
+    });
+
+    const lastDay = new Date(YEAR, MONTH, 0).getDate();
+    const firstDow = new Date(YEAR, MONTH-1, 1).getDay();
+    const wd = ['日','月','火','水','木','金','土'];
+    const dowOf = d => (firstDow + d - 1) % 7;
+
+    Object.values(groups).forEach(group=>{
+      const page = document.createElement('div');
+      page.className = 'print-page';
+
+      const titleText = group.label === fac.name
+        ? `${fac.name}　シフト表`
+        : `${fac.name}　${group.label}　シフト表`;
+      let html = `
+        <div class="page-header">
+          <div class="page-title">${esc(titleText)}</div>
+          <div class="page-sub">${YEAR}年${MONTH}月　出力日: ${new Date().toLocaleDateString('ja-JP')}</div>
+        </div>
+        <table class="shift-table">
+        <colgroup><col class="col-name">`;
+      for(let d=1; d<=lastDay; d++) html += `<col style="width:${(280)/lastDay}mm">`;
+      html += `</colgroup>
+        <thead><tr><th class="col-name">氏名</th>`;
+      for(let d=1; d<=lastDay; d++){
+        const dw = dowOf(d);
+        const cls = dw===0?'sun':dw===6?'sat':'';
+        html += `<th class="${cls}">${d}<br>${wd[dw]}</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+
+      group.units.forEach(u=>{
+        const uStaff = facStaff.filter(s=>s.unit_id===u.id);
+        if(!uStaff.length) return;
+        html += `<tr class="unit-row"><td colspan="${lastDay+1}">${esc(unitDisplayName(u.name))}（${uStaff.length}名）</td></tr>`;
+        uStaff.forEach(s=>{
+          html += `<tr><td class="col-name">${esc(s.name)}</td>`;
+          for(let d=1; d<=lastDay; d++){
+            const dw = dowOf(d);
+            const cls = dw===0?'sun':dw===6?'sat':'';
+            const v = entryMap[`${s.id}_${d}`] || '休';
+            html += `<td class="${cls} s-${esc(v)}">${esc(v)}</td>`;
+          }
+          html += `</tr>`;
+        });
+      });
+
+      html += `</tbody></table>`;
+      page.innerHTML = html;
+      root.appendChild(page);
+    });
+  }
+
+  if(!root.children.length){
+    root.innerHTML = '<div class="loading">表示するシフトデータがありません</div>';
+  }
+}
+
+main().catch(e=>{
+  document.getElementById('root').innerHTML = `<div class="loading">読み込みエラー: ${e.message}</div>`;
+});
+</script>
+</body>
+</html>
