@@ -4850,6 +4850,18 @@ def api_save_entries(vid):
     if not isinstance(entries, list) or not entries:
         return jsonify({"ok":False,"error":"保存対象のシフトがありません"}), 400
 
+    # version_idの存在確認（2026-08-14追記）。
+    # ブラウザ側がlocalStorageに古いversion_idをキャッシュしたまま保存しようとすると、
+    # 削除済み・不整合なversion_idでshift_entriesへINSERTしてFOREIGN KEY制約違反となり、
+    # 原因の分かりにくい500エラーでクラッシュしていた（DS1で発生した実例）。
+    # ここで事前に存在確認し、無い場合は分かりやすいエラーで返す。
+    ver_exists = qdb("SELECT id FROM shift_versions WHERE id=?", (vid,), one=True)
+    if not ver_exists:
+        return jsonify({
+            "ok": False,
+            "error": "対象のシフトが見つかりません（古いバージョン情報が残っている可能性があります）。ページを再読み込みしてから、もう一度お試しください。"
+        }), 404
+
     # 生成ロジック検証中は、不足・不整合があっても保存を止めない。
     # 検証結果はeval_jsonとレスポンスへ残し、DBエクスポート後の比較に使用する。
     ok, validation = _validate_saved_gh_entries(vid, entries)
