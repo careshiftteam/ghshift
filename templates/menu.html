@@ -652,6 +652,12 @@ html,body{overflow:hidden!important}
 <script>
 const now=new Date(),YEAR=now.getFullYear(),MONTH=now.getMonth()+1;
 let FAC=[],STAFF=[],VERS=[],WARNS=[],selectedCode='',shiftModalMode='new',targetYear=YEAR,targetMonth=MONTH,dashNoteSaveTimer=null;
+// 事業所ごとに「今表示している年月」を個別に保持する（事業所を切り替えても、それぞれの年月設定は独立して覚えている）
+let facMonth={};
+const getFacMonth=code=>{
+  if(!facMonth[code])facMonth[code]={year:YEAR,month:MONTH};
+  return facMonth[code];
+};
 const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
 const unitInitial=s=>{const t=String(s||'').trim();return t?esc(t.charAt(0)):'-';};
 const renderUnitBadge=units=>{if(!units.length)return '<span class="unit-badge empty">ユニット:-</span>';const initials=units.map(u=>unitInitial(u.name)).join('');const fullNames=units.map(u=>u.name||'').join('・');return `<span class="unit-badge" title="${esc(fullNames)}">ユニット:${initials}</span>`;};
@@ -674,6 +680,13 @@ const currentVersion=fac=>{
     (Number(b.month||0)-Number(a.month||0)) ||
     (Number(b.version_no||0)-Number(a.version_no||0))
   )[0];
+};
+// 指定した年月に一致するバージョンのみを返す（月をまたいで「作成中」を引きずらないため）
+const versionForMonth=(fac,year,month)=>{
+  if(!fac)return null;
+  const matches=VERS.filter(v=>v.facility_id===fac.id && Number(v.year)===Number(year) && Number(v.month)===Number(month));
+  if(!matches.length)return null;
+  return matches.sort((a,b)=>Number(b.version_no||0)-Number(a.version_no||0))[0];
 };
 const selectedFacility=()=>FAC.find(f=>f.code===selectedCode)||FAC[0]||null;
 const staffOfFac=fac=>fac?STAFF.filter(s=>s.facility_id===fac.id || s.fac_code===fac.code):[];
@@ -718,11 +731,14 @@ function renderFacilities(){
     const unitList=(f.units||[]);
     const unitBadge=renderUnitBadge(unitList);
     const warningCount=WARNS.filter(w=>w.facility===f.code||w.fac===f.code).length;
-    const version=currentVersion(f);
-    const st=statusInfo(version);
     const isSelected=selectedCode===f.code;
+    // 事業所ごとに個別の年月（facMonth）でバージョンを判定する。
+    // 右側の同じ事業所のダッシュボードカードも同じfacMonthを使うため、左右の表示が事業所単位で一致する。
+    const fm=getFacMonth(f.code);
+    const version=versionForMonth(f,fm.year,fm.month);
+    const st=statusInfo(version);
 
-    // 既存シフトの有無
+    // 既存シフトの有無（表示中の年月に限定）
     const hasVersion=!!version;
 
     // 展開アクションボタン（選択中のみ表示）
@@ -730,7 +746,7 @@ function renderFacilities(){
       <div class="fac-actions" onclick="event.stopPropagation()">
         <div class="fac-month-row">
           <button class="fac-month-btn" type="button" onclick="changeFacMonth(-1)">‹</button>
-          <span class="fac-month-label" id="fac-month-label-${esc(f.code)}">${targetYear}年${targetMonth}月</span>
+          <span class="fac-month-label" id="fac-month-label-${esc(f.code)}">${fm.year}年${fm.month}月</span>
           <button class="fac-month-btn" type="button" onclick="changeFacMonth(1)">›</button>
         </div>
         <div class="fac-btn-row">
@@ -759,27 +775,31 @@ function renderFacilities(){
 function goNewShift(code){
   selectedCode=code;
   localStorage.setItem('careshift_facility',code);
-  location.href=`/shift?facility=${encodeURIComponent(code)}&step=1&year=${targetYear}&month=${targetMonth}&new=1`;
+  const fm=getFacMonth(code);
+  location.href=`/shift?facility=${encodeURIComponent(code)}&step=1&year=${fm.year}&month=${fm.month}&new=1`;
 }
 function goOpenShift(code){
   selectedCode=code;
   localStorage.setItem('careshift_facility',code);
-  location.href=`/shift?facility=${encodeURIComponent(code)}&step=3&year=${targetYear}&month=${targetMonth}`;
+  const fm=getFacMonth(code);
+  location.href=`/shift?facility=${encodeURIComponent(code)}&step=3&year=${fm.year}&month=${fm.month}`;
 }
 function selectFacility(code){selectedCode=code;localStorage.setItem('careshift_facility',code);renderFacilities();renderDashboard();}
 
 function changeFacMonth(delta){
-  const d=new Date(targetYear,targetMonth-1+delta,1);
-  targetYear=d.getFullYear();
-  targetMonth=d.getMonth()+1;
+  if(!selectedCode)return;
+  const cur=getFacMonth(selectedCode);
+  const d=new Date(cur.year,cur.month-1+delta,1);
+  facMonth[selectedCode]={year:d.getFullYear(),month:d.getMonth()+1};
   renderFacilities();
   renderDashboard();
 }
 function changeDashboardMonth(delta){changeFacMonth(delta);}
 async function loadDashboardNote(fac){
   if(!fac)return '';
+  const fm=getFacMonth(fac.code);
   try{
-    const r=await fetch(`/api/dashboard_note/${targetYear}/${targetMonth}?facility_code=${encodeURIComponent(fac.code)}`);
+    const r=await fetch(`/api/dashboard_note/${fm.year}/${fm.month}?facility_code=${encodeURIComponent(fac.code)}`);
     const d=await r.json();
     if(d.ok)return d.note||'';
   }catch(e){}
@@ -793,8 +813,11 @@ async function renderDashboard(){
     return;
   }
   // 全事業所のシフト作成状況カードを生成
+  // 事業所ごとに個別のfacMonthに合わせて状態を表示する（左側の同じ事業所と一致させるため）。
+  // コメント欄・ユニット別充足率も同じfacMonthで読み込む。
   const cards = FAC.map(f=>{
-    const version=currentVersion(f);
+    const fm=getFacMonth(f.code);
+    const version=versionForMonth(f,fm.year,fm.month);
     const st=statusInfo(version, true);
     const warnings=warningsOfFac(f);
     const staffs=staffOfFac(f);
@@ -845,8 +868,9 @@ async function renderDashboard(){
 async function loadUnitSummary(code){
   const el=document.getElementById(`unit-summary-${code}`);
   if(!el)return;
+  const fm=getFacMonth(code);
   try{
-    const r=await fetch(`/api/shift_summary?facility_code=${encodeURIComponent(code)}&year=${targetYear}&month=${targetMonth}`);
+    const r=await fetch(`/api/shift_summary?facility_code=${encodeURIComponent(code)}&year=${fm.year}&month=${fm.month}`);
     const d=await r.json();
     if(!d.ok||!d.unit_summary||!d.unit_summary.length){
       el.innerHTML='<div class="dash-unit-empty">充足率データなし（シフト保存後に表示）</div>';
@@ -918,7 +942,8 @@ async function toggleSufficiency(code){
   try{
     const fac=FAC.find(f=>f.code===code);
     if(!fac){body.innerHTML='<div class="dash-suf-loading">事業所不明</div>';return;}
-    const r=await fetch(`/api/shift_summary?facility_code=${encodeURIComponent(code)}&year=${targetYear}&month=${targetMonth}`);
+    const fm=getFacMonth(code);
+    const r=await fetch(`/api/shift_summary?facility_code=${encodeURIComponent(code)}&year=${fm.year}&month=${fm.month}`);
     const d=await r.json();
     if(!d.ok||!d.summary||!d.summary.length){
       body.innerHTML='<div class="dash-suf-loading">集計データなし（シフト保存後に表示されます）</div>';
@@ -962,9 +987,10 @@ async function saveNoteForFac(code){
   const state=document.getElementById(`note-state-${code}`);
   if(!fac||!ta)return;
   if(state)state.textContent='保存中...';
+  const fm=getFacMonth(code);
   try{
     const r=await fetch('/api/dashboard_note',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({facility_code:code,year:targetYear,month:targetMonth,note:ta.value})});
+      body:JSON.stringify({facility_code:code,year:fm.year,month:fm.month,note:ta.value})});
     const d=await r.json();
     if(!d.ok)throw new Error(d.error||'保存に失敗しました');
     if(state)state.textContent='保存済み';
