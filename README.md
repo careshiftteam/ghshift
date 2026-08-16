@@ -138,5 +138,3 @@ GHShiftの利用にあたっては、以下の利用規約に同意いただい�
 - 運営者:TOMO(個人)
 - お問い合わせ:careshiftteam@gmail.com
 - ホームページ:[GHShift](https://ghshift.com/index.html)
-
-介護業界のDX化を少しでも後押しできればと思い、無償で公開しています。使ってみて気づいたことがあれば、ぜひ掲示板から教えてください。
